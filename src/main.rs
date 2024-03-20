@@ -22,14 +22,14 @@ fn main() {
             let reference_file = snapshot_matches.get_one::<String>("reference_file").unwrap();
             snapshot(directory, reference_file);
         },
-        Some(("validate", validate_matches)) => {
-            let directory = validate_matches.get_one::<String>("directory").unwrap();
-            let reference_file = validate_matches.get_one::<String>("reference_file").unwrap();
-            validate(directory, reference_file);
+        Some(("verify", verify_matches)) => {
+            let directory = verify_matches.get_one::<String>("directory").unwrap();
+            let reference_file = verify_matches.get_one::<String>("reference_file").unwrap();
+            verify(directory, reference_file);
         },
         _ => {
-            println!("Unknown command");
-            println!("Usage: snapshot <snapshot|validate> [options]");
+            println!("Usage: snapshot <snapshot|verify> [options]");
+            println!("Try 'sumify --help' for more information.");
         }
     }
 }
@@ -97,7 +97,7 @@ fn snapshot(in_dir: &String, ref_file: &String) {
     println!("[Snapshot] Done");
 }
 
-fn validate(target_dir : &String, ref_file : &String) {
+fn verify(target_dir : &String, ref_file : &String) {
     let output_file = File::open(ref_file).unwrap();
     let mut ref_map = HashMap::new();
 
@@ -120,7 +120,7 @@ fn validate(target_dir : &String, ref_file : &String) {
             let relative_path = path.replacen(target_dir, "", 1).to_string();
             if !ref_map.contains_key(&relative_path) {
                 result_map.insert(relative_path.to_string(), FileStatus::Extra);
-                print!("[Validate] [{}]: {}\n", "EXTRA".yellow(), relative_path);
+                print!("[Verify] [{}]: {}\n", "EXTRA".yellow(), relative_path);
                 continue;
             }
 
@@ -130,10 +130,10 @@ fn validate(target_dir : &String, ref_file : &String) {
 
             if ref_hash == &cur_hash {
                 result_map.insert(relative_path.to_string(), FileStatus::Ok);
-                print!("[Validate] [{}]: {}\n", "OK".green(), relative_path);
+                print!("[Verify] [{}]: {}\n", "OK".green(), relative_path);
             } else {
                 result_map.insert(relative_path.to_string(), FileStatus::Mismatch);
-                print!("[Validate] [{}]: {}\n", "MISMATCH".red(), relative_path);
+                print!("[Verify] [{}]: {}\n", "MISMATCH".red(), relative_path);
             }
             ref_map.remove(&relative_path);
         }
@@ -142,7 +142,7 @@ fn validate(target_dir : &String, ref_file : &String) {
     // left over files in refMap are not found
     for (key, _) in ref_map.iter() {
         result_map.insert(key.to_string(), FileStatus::NotFound);
-        print!("[Validate] [{}]: {}\n", "NOT FOUND".red(), key);
+        print!("[Verify] [{}]: {}\n", "NOT FOUND".red(), key);
     }
 }
 
