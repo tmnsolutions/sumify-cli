@@ -2,6 +2,8 @@
 name = "sumify"
 version = "1.0.0"
 edition = "2021"
+description = "Batch checksum tool for file integrity verification"
+license="MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
