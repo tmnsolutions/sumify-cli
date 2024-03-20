@@ -154,16 +154,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
-name = "learn-rust"
-version = "0.1.0"
-dependencies = [
- "clap",
- "colored",
- "sha2",
- "walkdir",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.153"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -194,6 +184,16 @@ name = "strsim"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ee073c9e4cd00e28217186dbe12796d692868f432bf2e97ee73bed0c56dfa01"
+
+[[package]]
+name = "sumify"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "colored",
+ "sha2",
+ "walkdir",
+]
 
 [[package]]
 name = "typenum"

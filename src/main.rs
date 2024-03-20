@@ -2,14 +2,9 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Read, Write};
 use sha2::{Sha256, Digest};
 use std::collections::HashMap;
-use std::env;
 use walkdir::WalkDir;
 use colored::{self, Colorize};
-use clap::{Arg, ArgAction, Command};
-
-const REF_DIR : &str = "test/ref/";
-const TARGET_DIR : &str = "test/target/";
-const RESULT_FILE : &str = "test/result.txt";
+use clap::{Arg, Command};
 
 enum FileStatus {
     Ok,
@@ -17,7 +12,6 @@ enum FileStatus {
     NotFound,
     Extra
 }
-
 
 fn main() {
     let cli = cli();
@@ -57,8 +51,8 @@ fn cli() -> Command {
                 )
         )
         .subcommand(
-            Command::new("validate")
-                .about("Validate the directory")
+            Command::new("verify")
+                .about("Verify the directory")
                 .arg(Arg::new("directory")
                     .required(true)
                     .long("directory")
@@ -105,7 +99,7 @@ fn snapshot(in_dir: &String, ref_file: &String) {
 
 fn validate(target_dir : &String, ref_file : &String) {
     let output_file = File::open(ref_file).unwrap();
-    let mut refMap = HashMap::new();
+    let mut ref_map = HashMap::new();
 
     // read the result.txt file line by line
     for line in BufReader::new(output_file).lines() {
@@ -113,10 +107,10 @@ fn validate(target_dir : &String, ref_file : &String) {
         let parts: Vec<&str> = line.split(":").collect();
         let file = parts[0].to_string();
         let hash = parts[1].to_string();
-        refMap.insert(file, hash);
+        ref_map.insert(file, hash);
     }
 
-    let mut resultMap = HashMap::new();
+    let mut result_map = HashMap::new();
 
     for entry in WalkDir::new(target_dir) {
         let entry = entry.unwrap();
@@ -124,30 +118,30 @@ fn validate(target_dir : &String, ref_file : &String) {
             // remove root_path from the path
             let path = entry.path().display().to_string();
             let relative_path = path.replacen(target_dir, "", 1).to_string();
-            if !refMap.contains_key(&relative_path) {
-                resultMap.insert(relative_path.to_string(), FileStatus::Extra);
+            if !ref_map.contains_key(&relative_path) {
+                result_map.insert(relative_path.to_string(), FileStatus::Extra);
                 print!("[Validate] [{}]: {}\n", "EXTRA".yellow(), relative_path);
                 continue;
             }
 
-            let ref_hash = refMap.get(&relative_path).unwrap();
+            let ref_hash = ref_map.get(&relative_path).unwrap();
             let cur_hash = calculate_sha256(path.as_str())
                 .unwrap_or("".to_string());
 
             if ref_hash == &cur_hash {
-                resultMap.insert(relative_path.to_string(), FileStatus::Ok);
+                result_map.insert(relative_path.to_string(), FileStatus::Ok);
                 print!("[Validate] [{}]: {}\n", "OK".green(), relative_path);
             } else {
-                resultMap.insert(relative_path.to_string(), FileStatus::Mismatch);
+                result_map.insert(relative_path.to_string(), FileStatus::Mismatch);
                 print!("[Validate] [{}]: {}\n", "MISMATCH".red(), relative_path);
             }
-            refMap.remove(&relative_path);
+            ref_map.remove(&relative_path);
         }
     }
 
     // left over files in refMap are not found
-    for (key, _) in refMap.iter() {
-        resultMap.insert(key.to_string(), FileStatus::NotFound);
+    for (key, _) in ref_map.iter() {
+        result_map.insert(key.to_string(), FileStatus::NotFound);
         print!("[Validate] [{}]: {}\n", "NOT FOUND".red(), key);
     }
 }
